@@ -1,7 +1,7 @@
 import numpy as np
 
 """
-Random and Human-ineracting players for the game of TicTacToe.
+Random and Human-interacting players for the game of TicTacToe.
 
 Author: Evgeny Tyurin, github.com/evg-tyurin
 Date: Jan 5, 2018.
@@ -26,7 +26,7 @@ class HumanTicTacToePlayer():
         self.game = game
 
     def play(self, board):
-        # display(board)
+        self.game.display(board)
         valid = self.game.getValidMoves(board, 1)
         for i in range(len(valid)):
             if valid[i]:
@@ -45,3 +45,19 @@ class HumanTicTacToePlayer():
                 print('Invalid')
 
         return a
+
+class GreedyTicTacToePlayer():
+    def __init__(self, game):
+        self.game = game
+
+    def play(self, board):
+        valids = self.game.getValidMoves(board, 1)
+        candidates = []
+        for a in range(self.game.getActionSize()):
+            if valids[a]==0:
+                continue
+            nextBoard, _ = self.game.getNextState(board, 1, a)
+            score = self.game.getScore(nextBoard, 1)
+            candidates += [(-score, a)]
+        candidates.sort()
+        return candidates[0][1]
