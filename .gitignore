@@ -10,4 +10,6 @@ checkpoints/
 
 # For PyCharm users
 .idea/
-
+.vscode/
+downgradedtfandtorch/
+trained_models/
