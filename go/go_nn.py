@@ -74,7 +74,9 @@ class ValueHead(nn.Module):
             nn.ReLU(inplace = True),
             Flatten(),
             nn.Linear(board_size**2*conv_out_channels,hidden_layer_size),
-            nn.Linear(hidden_layer_size,1)
+            nn.ReLU(inplace = True),
+            nn.Linear(hidden_layer_size,1),
+            nn.Tanh()
         )
 
     def forward(self,x):
@@ -98,6 +100,7 @@ class GoCNN(nn.Module):
 
     def forward(self, x) -> Tensor:
         x = Tensor(x)
+        x.requires_grad_(True)
         x = self.conv_block(x)
         for block in self.blocks:
             x = block(x)
