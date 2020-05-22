@@ -8,7 +8,7 @@ from torch import Tensor, nn
 
 class ResidualBlock(nn.Module):
     def __init__(self,
-                 in_channels: int=17,
+                 in_channels: int=256, #Mark 5/21: Should default to 256 (instead of 17) because it receives as input the output of the convolutional block?
                  out_channels: int=256):
         self.in_channels = in_channels
         self.out_channels = out_channels
@@ -24,7 +24,7 @@ class ResidualBlock(nn.Module):
     def forward(self, x: Tensor) -> Tensor:
         x_features = self.extractor(x)
         x_out = x + x_features
-        return self.relu(x)
+        return self.relu(x_out) #Mark 5/21: Changed x to x_out
 
 
 class ConvBlock(nn.Module):
@@ -45,9 +45,9 @@ class ConvBlock(nn.Module):
 
 class GoCNN(nn.Module):
     def __init__(self,
-                 board_size: int=9,
+                 board_size: int=19, #Mark 5/21: Changed 9 to 19
                  history_size_per_player: int=8,
-                 n_blocks: int=3,  # alphago Zero uses 19 or 39 blocks, we use less. 
+                 n_blocks: int=3,  # Alphago Zero uses 19 or 39 blocks, we use less. 
                  n_filters: int=256):
         self.board_size = board_size
         self.history_size_per_player = history_size_per_player
@@ -69,7 +69,10 @@ class GoCNN(nn.Module):
 
 
 class PolicyHead(nn.Module):
-    raise NotImplementedError("TODO:")
+    def __init__(self,
+                 in_channels = 256,
+                 out_channels = 256):
+        self.in_channels = 256 #Not finished yet
 
 class ValueHead(nn.Module):
     raise NotImplementedError("TODO:")

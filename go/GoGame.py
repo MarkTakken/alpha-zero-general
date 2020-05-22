@@ -163,7 +163,16 @@ class GoGame(Game):
 
     #Includes self.nn_hist_len boards for history
     def getCanonicalForm(self,state,player):
-        return player * state[len(state)-self.nn_hist_len:]
+        length = len(state)
+        if length >= self.nn_hist_len:
+            trimmedHistory = player * state[length-self.nn_hist_len:]
+        else:
+            trimmedHistory = np.concatenate((np.zeros((self.nn_hist_len-length,self.n,self.n),dtype=int),state),axis=0)
+        canonical = np.array([np.ones((self.n,self.n),dtype=int)]) if player == 1 else np.array([np.zeros((self.n,self.n),dtype=int)])
+        for board in trimmedHistory:
+            canonical = np.append(canonical,np.array([[[(1 if elmnt == -1 else 0) for elmnt in row] for row in board]]),axis=0)
+            canonical = np.append(canonical,np.array([[[(1 if elmnt == 1 else 0) for elmnt in row] for row in board]]),axis=0)
+        return canonical
 
     #All rotations and reflections
     def getSymmetries(self,canonicalState,pi):
@@ -234,3 +243,26 @@ class Tests:
         print(canonicalState)
         print(pi)
         print(g.getSymmetries(canonicalState,pi))
+
+    @staticmethod
+    def getCanonicalFormTest():
+        g = GoGame(4,2,0)
+        state = np.array([[[1,0,-1,1],[0,-1,0,0],[0,1,-1,0],[-1,0,0,1]],[[0,1,0,-1],[1,0,-1,-1],[1,1,1,-1],[0,0,-1,0]],[[0,0,1,0],[-1,0,0,0],[-1,-1,0,0],[1,1,1,-1]]])
+        print(state)
+        print('-----------')
+        print(g.getCanonicalForm(state,1))
+
+    @staticmethod
+    def getCanonicalFormTest2():
+        g = GoGame(4,4,0)
+        state = np.array([[[1,0,-1,1],[0,-1,0,0],[0,1,-1,0],[-1,0,0,1]],[[0,1,0,-1],[1,0,-1,-1],[1,1,1,-1],[0,0,-1,0]],[[0,0,1,0],[-1,0,0,0],[-1,-1,0,0],[1,1,1,-1]]])
+        print(state)
+        print('-----------')
+        print(g.getCanonicalForm(state,1))
+
+    @staticmethod
+    def getCanonicalFormTest3():
+        g = GoGame(4,2,0)
+        state = np.array([])
+        print(g.getCanonicalForm(state,1))
+
