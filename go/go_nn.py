@@ -9,10 +9,11 @@ class ConvBlock(nn.Module):
     def __init__(self,
                  in_channels: int=17,
                  out_channels: int=256):
+        super().__init__()
         self.extractor = nn.Sequential(
             nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=3, stride=1, padding=1), #changed outchannels = 256 to outchannels = outchannels
             nn.BatchNorm2d(num_features=out_channels),  #Mark 5/22: Changed 256 to out_channels
-            nn.ReLU(inplace=True),
+            nn.ReLU(inplace = True),
         )
     
     def forward(self, x: Tensor) -> Tensor:
@@ -23,6 +24,7 @@ class ResidualBlock(nn.Module):
                  in_channels: int=256, #Mark 5/21: Should default to 256 (instead of 17) because it receives as input the output of the convolutional block?
                  inter_channels: int=256,
                  out_channels: int=256):
+        super().__init__()
         self.extractor = nn.Sequential(
             nn.Conv2d(in_channels=in_channels, out_channels=inter_channels, kernel_size=3, stride=1, padding=1),
             nn.BatchNorm2d(num_features=inter_channels),
@@ -47,6 +49,7 @@ class PolicyHead(nn.Module):
                  in_channels : int = 256,
                  board_size: int = 19,
                  conv_out_channels: int = 2):
+        super().__init__()
         self.extractor = nn.Sequential(
             nn.Conv2d(in_channels = in_channels, out_channels = conv_out_channels, kernel_size=1,stride=1,padding=0),
             nn.BatchNorm2d(num_features = conv_out_channels),
@@ -64,6 +67,7 @@ class ValueHead(nn.Module):
                  board_size: int = 19,
                  conv_out_channels: int = 1,
                  hidden_layer_size: int = 256):
+        super().__init__()
         self.extractor = nn.Sequential(
             nn.Conv2d(in_channels = in_channels, out_channels = conv_out_channels, kernel_size = 1, stride = 1, padding = 0),
             nn.BatchNorm2d(num_features = conv_out_channels),
@@ -82,16 +86,15 @@ class GoCNN(nn.Module):
                  history: int=8,
                  n_blocks: int=3,  # Alphago Zero uses 19 or 39 blocks, we use less. 
                  n_filters: int=256):
+        super().__init__()
         self.in_channels = history * 2 + 1
-        
-        self.conv_block = ConvBlock(in_channels=self.in_channels, out_channels=256)
-        
+        self.conv_block = ConvBlock(in_channels=self.in_channels, out_channels=n_filters)
         self.blocks: List[ResidualBlock] = []
         for i in range(n_blocks):
             resblock = ResidualBlock(in_channels=n_filters, out_channels=n_filters)
             self.blocks.append(resblock)
         self.policy_head = PolicyHead(in_channels = n_filters, board_size = board_size)
-        self.value_head = ValueHead(in_channels = 256, board_size = board_size)
+        self.value_head = ValueHead(in_channels = n_filters, board_size = board_size)
 
     def forward(self, x) -> Tensor:
         x = Tensor(x)
@@ -104,7 +107,7 @@ class GoCNN(nn.Module):
 
 def test():
     network = GoCNN(board_size=4,history=1)
-    canonical_state = np.array([[[1,1,1,1],[1,1,1,1],[1,1,1,1],[1,1,1,1]],[[0,1,0,0],[1,1,0,0],[0,0,0,1],[1,0,0,0]],[[0,0,0,0],[0,0,1,1],[1,0,0,0],[0,1,1,0]]])
+    canonical_state = np.array([[[[1,1,1,1],[1,1,1,1],[1,1,1,1],[1,1,1,1]],[[0,1,0,0],[1,1,0,0],[0,0,0,1],[1,0,0,0]],[[0,0,0,0],[0,0,1,1],[1,0,0,0],[0,1,1,0]]]])
     print(canonical_state)
     print('------------')
     print(network(canonical_state))
