@@ -1,6 +1,6 @@
 from Coach import Coach
-from tictactoe.TicTacToeGame import TicTacToeGame as Game
-from tictactoe.keras.NNet import NNetWrapper as nn
+from go.GoGame import GoGame as Game
+from go.NNet import NNetWrapper as nn
 from utils import *
 
 args = dotdict({
@@ -13,15 +13,15 @@ args = dotdict({
     'arenaCompare': 40,         #Originally 40 # Number of games to play during arena play to determine if new net will be accepted.
     'cpuct': 1,
 
-    'checkpoint': './trained_models/tictactoe',
-    'load_model': True,
-    'load_folder_file': ('./trained_models/tictactoe','best.pth.tar'), #Originally /dev/models/8x100x50 , best.pth.tar
-    'numItersForTrainExamplesHistory': 10, #Originally 20
+    'checkpoint': './trained_models/go',
+    'load_model': False,
+    'load_folder_file': ('./trained_models/go','best.pth.tar'), #Originally /dev/models/8x100x50 , best.pth.tar
+    'numItersForTrainExamplesHistory': 50, #Originally 20
 
 })
 
 if __name__ == "__main__":
-    g = Game(3)
+    g = Game(19)
     nnet = nn(g)
 
     if args.load_model:

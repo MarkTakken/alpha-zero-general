@@ -56,6 +56,7 @@ class PolicyHead(nn.Module):
             nn.ReLU(inplace = True),
             Flatten(),
             nn.Linear(board_size**2*conv_out_channels,board_size**2+1)
+            #Add softmax?
         )
 
     def forward(self,x):
@@ -82,24 +83,25 @@ class ValueHead(nn.Module):
     def forward(self,x):
         return self.extractor(x)
 
-class GoCNN(nn.Module):
+class GoNNet(nn.Module):
     def __init__(self,
                  board_size: int=19, #Mark 5/21: Changed 9 to 19
                  history: int=8,
-                 n_blocks: int=3,  # Alphago Zero uses 19 or 39 blocks, we use less. 
+                 n_blocks: int=3,  # Alphago Zero uses 19 or 39 blocks, we use fewer. 
                  n_filters: int=256):
         super().__init__()
         self.in_channels = history * 2 + 1
         self.conv_block = ConvBlock(in_channels=self.in_channels, out_channels=n_filters)
         self.blocks: List[ResidualBlock] = []
-        for i in range(n_blocks):
+        for _ in range(n_blocks):
             resblock = ResidualBlock(in_channels=n_filters, out_channels=n_filters)
             self.blocks.append(resblock)
         self.policy_head = PolicyHead(in_channels = n_filters, board_size = board_size)
         self.value_head = ValueHead(in_channels = n_filters, board_size = board_size)
 
     def forward(self, x) -> Tensor:
-        x = Tensor(x)
+        if not(type(x) == Tensor):
+            x = Tensor(x)
         x.requires_grad_(True)
         x = self.conv_block(x)
         for block in self.blocks:
@@ -109,7 +111,7 @@ class GoCNN(nn.Module):
         return (pi,v)
 
 def test():
-    network = GoCNN(board_size=4,history=1)
+    network = GoNNet(board_size=4,history=1)
     canonical_state = np.array([[[[1,1,1,1],[1,1,1,1],[1,1,1,1],[1,1,1,1]],[[0,1,0,0],[1,1,0,0],[0,0,0,1],[1,0,0,0]],[[0,0,0,0],[0,0,1,1],[1,0,0,0],[0,1,1,0]]]])
     print(canonical_state)
     print('------------')

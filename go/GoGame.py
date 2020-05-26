@@ -3,8 +3,14 @@ from Game import Game
 from copy import deepcopy
 
 class GoGame(Game):
-    
-    def __init__(self,n,nn_hist_len,komi):
+    square_content = {
+        -1: "O",
+        +0: "-",
+        +1: "X"
+    }
+
+
+    def __init__(self,n=19,nn_hist_len=8,komi=7.5):
         self.n = n
         self.nn_hist_len = nn_hist_len
         self.komi = komi #Compensation given to white for going second
@@ -190,6 +196,24 @@ class GoGame(Game):
 
     def stringRepresentation(self,canonicalState):
         return str(canonicalState)
+
+    @staticmethod
+    def display(state):
+        board = state[-1]
+        n = board.shape[0]
+        print("   ", end="")
+        for y in range(n):
+            print(y, end=" ")
+        print("")
+        print("-----------------------")
+        for y in range(n):
+            print(y, "|", end="")    # print the row #
+            for x in range(n):
+                piece = board[y][x]    # get the piece to print
+                print(GoGame.square_content[piece], end=" ")
+            print("|")
+
+        print("-----------------------")
 
 class Tests:
 

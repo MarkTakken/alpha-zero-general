@@ -18,7 +18,7 @@ class NeuralNet():
 
         Input:
             examples: a list of training examples, where each example is of form
-                      (board, pi, v). pi is the MCTS informed policy vector for
+                      (board, pi, v). pi is the MCTS-informed policy vector for
                       the given board, and v is its value. The examples has
                       board in its canonical form.
         """
