@@ -75,6 +75,7 @@ class GoGame(Game):
     def getNextBoard(self,board,player,move):
         board = deepcopy(board)
         suicide = False
+        captured_enemy = False
         if move != "pass":
             board[move[0]][move[1]] = player
             board,captured_enemy = self.clearStones(board,-player,move)
@@ -90,7 +91,7 @@ class GoGame(Game):
         board = state[len(state)-1]
         move = "pass" if action == self.n*self.n else (action // self.n, action % self.n)
         newboard = np.array([self.getNextBoard(board,player,move)[0]])
-        return np.append(state,newboard,0)
+        return np.append(state,newboard,0),-player
 
     #Move is in the form (x,y)
     def isValidMove(self,state,player,move):
@@ -194,8 +195,8 @@ class GoGame(Game):
                 symmetries.append((newS,list(newPi.ravel())+[pi[-1]]))
         return symmetries
 
-    def stringRepresentation(self,canonicalState):
-        return str(canonicalState)
+    def stringRepresentation(self,state):
+        return str(state)
 
     @staticmethod
     def display(state):
@@ -216,6 +217,11 @@ class GoGame(Game):
         print("-----------------------")
 
 class Tests:
+
+    @staticmethod
+    def getInitBoard():
+        g = GoGame(4,2,0)
+        print(g.getInitBoard())
 
     @staticmethod
     def getNextStateTest():
@@ -289,4 +295,9 @@ class Tests:
         g = GoGame(4,2,0)
         state = np.array([])
         print(g.getCanonicalForm(state,1))
+
+    @staticmethod
+    def isTerminalTest():
+        g = GoGame(4,2,0)
+        print(g.isTerminal(g.getInitBoard()))
 

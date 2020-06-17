@@ -1,5 +1,6 @@
 import math
 import numpy as np
+from time import sleep
 EPS = 1e-8
 
 class MCTS():
@@ -18,8 +19,9 @@ class MCTS():
 
         self.Es = {}        # stores game.getGameEnded ended for board s
         self.Vs = {}        # stores game.getValidMoves for board s
+        #self.print_count = 0
 
-    def getActionProb(self, canonicalBoard, temp=1):
+    def getActionProb(self, state, player, temp=1):
         """
         This function performs numMCTSSims simulations of MCTS starting from
         canonicalBoard.
@@ -28,25 +30,26 @@ class MCTS():
             probs: a policy vector where the probability of the ith action is
                    proportional to Nsa[(s,a)]**(1./temp)
         """
+        #canonicalBoard = self.game.getCanonicalForm(state,player)
+        #print(state)
         for i in range(self.args.numMCTSSims):
-            self.search(canonicalBoard)
-
-        s = self.game.stringRepresentation(canonicalBoard)
+            self.search(state,player)
+        print("Search successful, yay!")
+        #self.print_count = 0
+        s = self.game.stringRepresentation(state)
         counts = [self.Nsa[(s,a)] if (s,a) in self.Nsa else 0 for a in range(self.game.getActionSize())]
-
         if temp==0:
             bestA = np.argmax(counts)
             probs = [0]*len(counts)
             probs[bestA]=1
             return probs
-
         counts = [x**(1./temp) for x in counts]
         counts_sum = float(sum(counts))
         probs = [x/counts_sum for x in counts]
         return probs
 
 
-    def search(self, canonicalBoard):
+    def search(self, state, player):
         """
         This function performs one iteration of MCTS. It is recursively called
         till a leaf node is found. The action chosen at each node is one that
@@ -65,19 +68,29 @@ class MCTS():
         Returns:
             v: the negative of the value of the current canonicalBoard
         """
-
-        s = self.game.stringRepresentation(canonicalBoard)
-
+        #if self.print_count <= 20:
+        #    print('----------------------------------------------')
+        #self.print_count += 1
+        canonicalBoard = self.game.getCanonicalForm(state,player)
+        s = self.game.stringRepresentation(state)
         if s not in self.Es:
-            self.Es[s] = self.game.getGameEnded(canonicalBoard, 1)
+            #print("Checkpoint 0")
+            self.Es[s] = self.game.getGameEnded(state, player)
+        #if self.print_count <= 20:
+        #    print(self.game.getGameEnded(state,player),self.Es[s])
+        #    print(s)
         if self.Es[s]!=0:
+            #print("Checkpoint 1")
             # terminal node
-            return -self.Es[s]
-
+            #if self.print_count <= 20:
+            #    print("END")
+            return -self.Es[s] #################RETURN###############
+        #--print("Checkpoint 2")
         if s not in self.Ps:
+            #print("Checkpoint 3")
             # leaf node
             self.Ps[s], v = self.nnet.predict(canonicalBoard)
-            valids = self.game.getValidMoves(canonicalBoard, 1)
+            valids = self.game.getValidMoves(state, player)
             self.Ps[s] = self.Ps[s]*valids      # masking invalid moves
             sum_Ps_s = np.sum(self.Ps[s])
             if sum_Ps_s > 0:
@@ -93,7 +106,9 @@ class MCTS():
 
             self.Vs[s] = valids
             self.Ns[s] = 0
-            return -v
+            #if self.print_count <= 20:
+            #    print("END")
+            return -v ############################RETURN################
 
         valids = self.Vs[s]
         cur_best = -float('inf')
@@ -112,10 +127,14 @@ class MCTS():
                     best_act = a
 
         a = best_act
-        next_s, next_player = self.game.getNextState(canonicalBoard, 1, a)
-        next_s = self.game.getCanonicalForm(next_s, next_player)
-
-        v = self.search(next_s)
+        #if self.print_count <= 20:
+        #    print(a)
+        next_s, next_player = self.game.getNextState(state, player, a)
+        #if self.print_count <= 20:
+        #    print("Checkpoint 4")
+        #next_canonical = self.game.getCanonicalForm(next_s, next_player)
+        v = self.search(next_s,next_player)
+        #print("Checkpoint 5")
 
         if (s,a) in self.Qsa:
             self.Qsa[(s,a)] = (self.Nsa[(s,a)]*self.Qsa[(s,a)] + v)/(self.Nsa[(s,a)]+1)
@@ -126,4 +145,4 @@ class MCTS():
             self.Nsa[(s,a)] = 1
 
         self.Ns[s] += 1
-        return -v
+        return -v     #############################RETURN##################

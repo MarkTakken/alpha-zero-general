@@ -2,7 +2,7 @@ import os
 import shutil
 import time
 from utils import dotdict
-from go_nn import GoNNet
+from go.go_nn import GoNNet
 from NeuralNet import NeuralNet
 import torch
 import random
@@ -28,9 +28,11 @@ args = dotdict({
 
 class NNetWrapper(NeuralNet):
     def __init__(self,game):
-        self.nnet = GoNNet(board_size = game.n, history = game.nn_hist_len, n_blocks = args.numblocks, n_filters = args.numfilters)
+        self.nnet = GoNNet(board_size = game.n, history = game.nn_hist_len, n_blocks = args.num_blocks, n_filters = args.num_filters)
         self.board_x, self.board_y = game.getBoardSize()
         self.action_size = game.getActionSize()
+        self.game = game
+        self.history = game.nn_hist_len
         if args.cuda:
             self.nnet.cuda()
 
@@ -115,13 +117,13 @@ class NNetWrapper(NeuralNet):
         # preparing input
         board = torch.Tensor(board.astype(np.float64))
         if args.cuda: board = board.contiguous().cuda()
-        board = board.view(1, self.board_x, self.board_y)
+        board = board.view(1,2*self.history+1, self.board_x, self.board_y)
         self.nnet.eval()
         with torch.no_grad():
             p, v = self.nnet(board)
 
         #print('PREDICTION TIME TAKEN : {0:03f}'.format(time.time()-start))
-        return p.data.cpu().numpy()[0], v.data.cpu().numpy()[0]
+        return p.data.cpu().numpy(), v.data.cpu().numpy()[0]
 
     def save_checkpoint(self, folder='checkpoint', filename='checkpoint.pth.tar'):
         filepath = os.path.join(folder, filename)

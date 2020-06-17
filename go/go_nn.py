@@ -55,7 +55,8 @@ class PolicyHead(nn.Module):
             nn.BatchNorm2d(num_features = conv_out_channels),
             nn.ReLU(inplace = True),
             Flatten(),
-            nn.Linear(board_size**2*conv_out_channels,board_size**2+1)
+            nn.Linear(board_size**2*conv_out_channels,board_size**2+1),
+            nn.Softmax(dim = 0)
             #Add softmax?
         )
 

@@ -43,9 +43,9 @@ class Arena():
                 assert(self.display)
                 print("Turn ", str(it), "Player ", str(curPlayer))
                 self.display(board)
-            action = players[curPlayer+1](self.game.getCanonicalForm(board, curPlayer))
+            action = players[curPlayer+1](board,curPlayer)
 
-            valids = self.game.getValidMoves(self.game.getCanonicalForm(board, curPlayer),1)
+            valids = self.game.getValidMoves(board,curPlayer)
 
             if valids[action]==0:
                 print(action)
@@ -55,7 +55,7 @@ class Arena():
             assert(self.display)
             print("Game over: Turn ", str(it), "Result ", str(self.game.getGameEnded(board, 1)))
             self.display(board)
-        return curPlayer*self.game.getGameEnded(board, curPlayer)
+        return self.game.getGameEnded(board,1)#curPlayer*self.game.getGameEnded(board, curPlayer)
 
     def playGames(self, num, verbose=False):
         """
