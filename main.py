@@ -1,7 +1,20 @@
+import logging
+from sys import argv
+
 from Coach import Coach
 from go.GoGame import GoGame as Game
 from go.NNet import NNetWrapper as nn
 from utils import *
+
+logging.basicConfig(
+    format='%(levelname)-8s [%(name)s:%(lineno)d] %(message)s',
+    datefmt='%Y-%m-%d:%H:%M:%S',
+    level=logging.INFO,
+)
+root_logger = logging.getLogger()
+
+if "-d" in argv or "--debug" in argv:
+    root_logger.setLevel(logging.DEBUG)
 
 args = dotdict({
     'numIters': 3,  #Originally 1000

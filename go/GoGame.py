@@ -1,6 +1,8 @@
 import numpy as np 
 from Game import Game
 from copy import deepcopy
+import logging
+logger = logging.getLogger(__file__)
 
 class GoGame(Game):
     square_content = {
@@ -195,7 +197,9 @@ class GoGame(Game):
                 symmetries.append((newS,list(newPi.ravel())+[pi[-1]]))
         return symmetries
 
-    def stringRepresentation(self,state):
+    def stringRepresentation(self, state: np.ndarray):
+        logger.debug(f"id of state is {id(state)}")
+        return state.tostring()
         return str(state)
 
     @staticmethod

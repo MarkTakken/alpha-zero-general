@@ -3,12 +3,19 @@ import numpy as np
 from time import sleep
 EPS = 1e-8
 
+from Game import Game
+from NeuralNet import NeuralNet
+from typing import Dict
+import logging
+
+logger = logging.getLogger(__file__)
+
 class MCTS():
     """
     This class handles the MCTS tree.
     """
 
-    def __init__(self, game, nnet, args):
+    def __init__(self, game: Game, nnet: NeuralNet, args):
         self.game = game
         self.nnet = nnet
         self.args = args
@@ -34,7 +41,7 @@ class MCTS():
         #print(state)
         for i in range(self.args.numMCTSSims):
             self.search(state,player)
-        print("Search successful, yay!")
+        logger.info("Search successful, yay!")
         #self.print_count = 0
         s = self.game.stringRepresentation(state)
         counts = [self.Nsa[(s,a)] if (s,a) in self.Nsa else 0 for a in range(self.game.getActionSize())]

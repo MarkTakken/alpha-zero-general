@@ -35,6 +35,8 @@ class ResidualBlock(nn.Module):
         self.relu = nn.ReLU(inplace=True)
     
     def forward(self, x: Tensor) -> Tensor:
+        if torch.cuda.is_available():
+            self.cuda()
         x_features = self.extractor(x)
         x_out = x + x_features
         return self.relu(x_out) #Mark 5/21: Changed x to x_out
@@ -100,9 +102,12 @@ class GoNNet(nn.Module):
         self.policy_head = PolicyHead(in_channels = n_filters, board_size = board_size)
         self.value_head = ValueHead(in_channels = n_filters, board_size = board_size)
 
+        if torch.cuda.is_available():
+            self.cuda()
+
     def forward(self, x) -> Tensor:
         if not(type(x) == Tensor):
-            x = Tensor(x)
+            x = torch.as_tensor(x)
         x.requires_grad_(True)
         x = self.conv_block(x)
         for block in self.blocks:

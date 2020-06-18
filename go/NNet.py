@@ -29,6 +29,9 @@ args = dotdict({
 class NNetWrapper(NeuralNet):
     def __init__(self,game):
         self.nnet = GoNNet(board_size = game.n, history = game.nn_hist_len, n_blocks = args.num_blocks, n_filters = args.num_filters)
+        if torch.cuda.is_available():
+            print("Moving model to GPU")
+            self.nnet.to("cuda")
         self.board_x, self.board_y = game.getBoardSize()
         self.action_size = game.getActionSize()
         self.game = game
