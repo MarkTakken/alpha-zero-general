@@ -30,15 +30,13 @@ class NNetWrapper(NeuralNet):
     def __init__(self,game):
         self.nnet = GoNNet(board_size = game.n, history = game.nn_hist_len, n_blocks = args.num_blocks, n_filters = args.num_filters)
         #Not in Othello's NNetWrapper so I commented out for now
-        #if torch.cuda.is_available():
-        #    print("Moving model to GPU")
-        #    self.nnet.to("cuda")
+        if args.cuda:
+           print("Moving model to GPU")
+           self.nnet.cuda()
         self.board_x, self.board_y = game.getBoardSize()
         self.action_size = game.getActionSize()
         self.game = game
         self.history = game.nn_hist_len
-        if args.cuda:
-            self.nnet.cuda()
 
     def loss_v(self,outputs,targets):
         #print(outputs.size())
@@ -74,7 +72,9 @@ class NNetWrapper(NeuralNet):
 
                 # predict
                 if args.cuda:
-                    boards, target_pis, target_vs = boards.contiguous().cuda(), target_pis.contiguous().cuda(), target_vs.contiguous().cuda()
+                    boards = boards.contiguous().cuda()
+                    target_pis = target_pis.contiguous().cuda()
+                    target_vs = target_vs.contiguous().cuda()
 
                 # measure data loading time
                 data_time.update(time.time() - end)
@@ -117,7 +117,7 @@ class NNetWrapper(NeuralNet):
             bar.finish()
 
 
-    def predict(self, board):
+    def predict(self, board: np.ndarray):
         """
         board: np array with board
         """
@@ -125,12 +125,11 @@ class NNetWrapper(NeuralNet):
         #start = time.time()
 
         # preparing input
-        board = torch.Tensor(board.astype(np.float64))
+        board = torch.as_tensor(board, dtype=torch.float)
         if args.cuda:
             board = board.contiguous().cuda()
-            #The line below is not in the Othello implementation, so I commented it out for now
-            #self.nnet.cuda()
-
+            self.nnet.cuda()
+        
         board = board.view(1,2*self.history+1, self.board_x, self.board_y)
         self.nnet.eval()
 

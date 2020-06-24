@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Union, Tuple
 
 import numpy as np
 
@@ -104,27 +104,23 @@ class GoNNet(nn.Module):
         super().__init__()
         self.in_channels = history * 2 + 1
         self.conv_block = ConvBlock(in_channels=self.in_channels, out_channels=n_filters)
-        self.blocks: List[ResidualBlock] = []
+        blocks: List[ResidualBlock] = []
         for _ in range(n_blocks):
             resblock = ResidualBlock(in_channels=n_filters, out_channels=n_filters)
-            self.blocks.append(resblock)
+            blocks.append(resblock)
+        self.blocks = nn.Sequential(*blocks)
         self.policy_head = PolicyHead(in_channels = n_filters, board_size = board_size)
         self.value_head = ValueHead(in_channels = n_filters, board_size = board_size)
 
-        #The lines below are not in the othello implementation, so I commented them out for now
-        #if torch.cuda.is_available():
-        #    self.cuda()
-
-    def forward(self, x) -> Tensor:
-        if not(type(x) == Tensor):
-            x = torch.Tensor(x)
+    def forward(self, x: Union[np.ndarray, Tensor]) -> Tuple[Tensor, Tensor]:
+        # Convert to tensor if necessary
+        x = torch.as_tensor(x)
         x.requires_grad_(True)
         x = self.conv_block(x)
-        for block in self.blocks:
-            x = block(x)
+        x = self.blocks(x)
         pi = self.policy_head(x)
         v = self.value_head(x)
-        return (pi,v)
+        return (pi, v)
 
 def test():
     network = GoNNet(board_size=4,history=1)
