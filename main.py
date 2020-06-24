@@ -4,6 +4,9 @@ from sys import argv
 from Coach import Coach
 from go.GoGame import GoGame as Game
 from go.NNet import NNetWrapper as nn
+#In order to run for Othello, comment the above two lines and uncomment the below two lines
+#from othello.OthelloGame import OthelloGame as Game
+#from othello.pytorch.NNet import NNetWrapper as nn
 from utils import *
 
 logging.basicConfig(
@@ -34,7 +37,7 @@ args = dotdict({
 })
 
 if __name__ == "__main__":
-    g = Game(9)
+    g = Game(6)
     nnet = nn(g)
 
     if args.load_model:
