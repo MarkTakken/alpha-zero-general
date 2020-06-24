@@ -41,7 +41,7 @@ class MCTS():
         #print(state)
         for i in range(self.args.numMCTSSims):
             self.search(state,player)
-        logger.info("Search successful, yay!")
+        #logger.info("Search successful, yay!")
         #self.print_count = 0
         s = self.game.stringRepresentation(state)
         counts = [self.Nsa[(s,a)] if (s,a) in self.Nsa else 0 for a in range(self.game.getActionSize())]
@@ -96,7 +96,9 @@ class MCTS():
         if s not in self.Ps:
             #print("Checkpoint 3")
             # leaf node
+            #print(self.nnet.predict(canonicalBoard))
             self.Ps[s], v = self.nnet.predict(canonicalBoard)
+            #print(v)
             valids = self.game.getValidMoves(state, player)
             self.Ps[s] = self.Ps[s]*valids      # masking invalid moves
             sum_Ps_s = np.sum(self.Ps[s])

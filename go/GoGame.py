@@ -164,7 +164,7 @@ class GoGame(Game):
 
     def isTerminal(self,state):
         length = len(state)
-        return len(state) >= 3 and np.array_equal(state[length-1],state[length-2]) and np.array_equal(state[length-2],state[length-3])
+        return (len(state) >= 3 and np.array_equal(state[length-1],state[length-2]) and np.array_equal(state[length-2],state[length-3])) or len(state) > 2 * self.n * self.n
 
     #Returns reward for player
     def getGameEnded(self,state,player):

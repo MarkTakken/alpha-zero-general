@@ -35,16 +35,24 @@ class ResidualBlock(nn.Module):
         self.relu = nn.ReLU(inplace=True)
     
     def forward(self, x: Tensor) -> Tensor:
-        if torch.cuda.is_available():
-            self.cuda()
+        #Not in othello implementation, so commented out for now
+        #if torch.cuda.is_available():
+        #    self.cuda()
         x_features = self.extractor(x)
         x_out = x + x_features
         return self.relu(x_out) #Mark 5/21: Changed x to x_out
 
 class Flatten(nn.Module):
+    def __init__(self,
+                 row_length):
+        super().__init__()
+        self.row_length = row_length
+    def forward(self,x):
+        return x.view(-1,self.row_length)
+
+class ToScalar(nn.Module):
     def forward(self,x):
         return x.view(-1)
-
 
 class PolicyHead(nn.Module):
     def __init__(self,
@@ -56,9 +64,9 @@ class PolicyHead(nn.Module):
             nn.Conv2d(in_channels = in_channels, out_channels = conv_out_channels, kernel_size=1,stride=1,padding=0),
             nn.BatchNorm2d(num_features = conv_out_channels),
             nn.ReLU(inplace = True),
-            Flatten(),
+            Flatten(row_length = board_size*board_size*conv_out_channels),
             nn.Linear(board_size**2*conv_out_channels,board_size**2+1),
-            nn.Softmax(dim = 0)
+            nn.Softmax(dim = 1)
             #Add softmax?
         )
 
@@ -76,11 +84,12 @@ class ValueHead(nn.Module):
             nn.Conv2d(in_channels = in_channels, out_channels = conv_out_channels, kernel_size = 1, stride = 1, padding = 0),
             nn.BatchNorm2d(num_features = conv_out_channels),
             nn.ReLU(inplace = True),
-            Flatten(),
+            Flatten(row_length=board_size*board_size*conv_out_channels),
             nn.Linear(board_size**2*conv_out_channels,hidden_layer_size),
             nn.ReLU(inplace = True),
             nn.Linear(hidden_layer_size,1),
-            nn.Tanh()
+            nn.Tanh(),
+            ToScalar()
         )
 
     def forward(self,x):
@@ -102,12 +111,13 @@ class GoNNet(nn.Module):
         self.policy_head = PolicyHead(in_channels = n_filters, board_size = board_size)
         self.value_head = ValueHead(in_channels = n_filters, board_size = board_size)
 
-        if torch.cuda.is_available():
-            self.cuda()
+        #The lines below are not in the othello implementation, so I commented them out for now
+        #if torch.cuda.is_available():
+        #    self.cuda()
 
     def forward(self, x) -> Tensor:
         if not(type(x) == Tensor):
-            x = torch.as_tensor(x)
+            x = torch.Tensor(x)
         x.requires_grad_(True)
         x = self.conv_block(x)
         for block in self.blocks:

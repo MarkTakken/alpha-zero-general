@@ -19,7 +19,7 @@ from torchvision import datasets, transforms
 args = dotdict({
     'lr': 0.001,
     'dropout': 0.3,
-    'epochs': 10,
+    'epochs': 1,  #Originally 10
     'batch_size': 64,
     'cuda': torch.cuda.is_available(),
     'num_filters': 256,
@@ -29,9 +29,10 @@ args = dotdict({
 class NNetWrapper(NeuralNet):
     def __init__(self,game):
         self.nnet = GoNNet(board_size = game.n, history = game.nn_hist_len, n_blocks = args.num_blocks, n_filters = args.num_filters)
-        if torch.cuda.is_available():
-            print("Moving model to GPU")
-            self.nnet.to("cuda")
+        #Not in Othello's NNetWrapper so I commented out for now
+        #if torch.cuda.is_available():
+        #    print("Moving model to GPU")
+        #    self.nnet.to("cuda")
         self.board_x, self.board_y = game.getBoardSize()
         self.action_size = game.getActionSize()
         self.game = game
@@ -40,8 +41,11 @@ class NNetWrapper(NeuralNet):
             self.nnet.cuda()
 
     def loss_v(self,outputs,targets):
+        #print(outputs.size())
         return torch.sum((outputs-targets)**2)/targets.size()[0]
     def loss_pi(self,outputs,targets):
+        #print(outputs)
+        #print(torch.log(outputs))
         return -torch.sum(targets*torch.log(outputs))/targets.size()[0]
     def train(self, examples):
         """
@@ -76,10 +80,13 @@ class NNetWrapper(NeuralNet):
                 data_time.update(time.time() - end)
 
                 # compute output
+                #print(self.nnet(boards))
+                #print(boards.shape)
                 out_pi, out_v = self.nnet(boards)
-                l_pi = self.loss_pi(target_pis, out_pi)
-                l_v = self.loss_v(target_vs, out_v)
+                l_pi = self.loss_pi(out_pi, target_pis)
+                l_v = self.loss_v(out_v, target_vs)
                 total_loss = l_pi + l_v
+                #print(out_pi,out_v)
 
                 # record loss
                 pi_losses.update(l_pi.item(), boards.size(0))
@@ -121,7 +128,8 @@ class NNetWrapper(NeuralNet):
         board = torch.Tensor(board.astype(np.float64))
         if args.cuda:
             board = board.contiguous().cuda()
-            self.nnet.cuda()
+            #The line below is not in the Othello implementation, so I commented it out for now
+            #self.nnet.cuda()
 
         board = board.view(1,2*self.history+1, self.board_x, self.board_y)
         self.nnet.eval()
@@ -129,8 +137,10 @@ class NNetWrapper(NeuralNet):
         with torch.no_grad():
             p, v = self.nnet(board)
 
+        #print(p.shape, v.shape)
+        #print(v.data.cpu().numpy()[0])
         #print('PREDICTION TIME TAKEN : {0:03f}'.format(time.time()-start))
-        return p.data.cpu().numpy(), v.data.cpu().numpy()[0]
+        return p.data.cpu().numpy()[0], v.data.cpu().numpy()[0]
 
     def save_checkpoint(self, folder='checkpoint', filename='checkpoint.pth.tar'):
         filepath = os.path.join(folder, filename)
