@@ -46,8 +46,11 @@ class Coach():
         while True:
             episodeStep += 1
             canonicalBoard = self.game.getCanonicalForm(board,self.curPlayer)
+            v = self.nnet.predict(canonicalBoard)[1]
+            #print(v)
+            if v < self.args.resignationThreshold:
+                return [(x[0],x[2],-1*((-1)**(x[1]!=self.curPlayer))) for x in trainExamples] 
             temp = int(episodeStep < self.args.tempThreshold)
-
             pi = self.mcts.getActionProb(board,self.curPlayer, temp=temp)
             #print("Checkpoint oink")
             sym = self.game.getSymmetries(canonicalBoard, pi)

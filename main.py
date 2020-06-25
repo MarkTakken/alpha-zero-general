@@ -33,11 +33,11 @@ args = dotdict({
     'load_model': False,
     'load_folder_file': ('./trained_models/9x9go','best.pth.tar'), #Originally /dev/models/8x100x50 , best.pth.tar
     'numItersForTrainExamplesHistory': 50, #Originally 20
-
+    'resignationThreshold': -0.90  #Added
 })
 
 if __name__ == "__main__":
-    g = Game(6)
+    g = Game(9)
     nnet = nn(g)
 
     if args.load_model:
