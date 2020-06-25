@@ -11,5 +11,5 @@ checkpoints/
 # For PyCharm users
 .idea/
 .vscode/
-downgradedtfandtorch/
-trained_models/
+downgradedtfandtorch/*
+trained_models/*
