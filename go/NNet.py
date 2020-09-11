@@ -19,7 +19,7 @@ from torchvision import datasets, transforms
 args = dotdict({
     'lr': 0.001,
     'dropout': 0.3,
-    'epochs': 10,  #Originally 10
+    'epochs': 2,  #Originally 10
     'batch_size': 512, #Originally 64
     'cuda': torch.cuda.is_available(),
     'num_filters': 256,
