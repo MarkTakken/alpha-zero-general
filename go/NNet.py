@@ -19,8 +19,8 @@ from torchvision import datasets, transforms
 args = dotdict({
     'lr': 0.001,
     'dropout': 0.3,
-    'epochs': 2,  #Originally 10
-    'batch_size': 512, #Originally 64
+    'epochs': 15,  #Originally 10
+    'batch_size': 64, #Originally 64
     'cuda': torch.cuda.is_available(),
     'num_filters': 256,
     'num_blocks': 5
@@ -45,13 +45,13 @@ class NNetWrapper(NeuralNet):
         #print(outputs)
         #print(torch.log(outputs))
         return -torch.sum(targets*torch.log(outputs))/targets.size()[0]
-    def train(self, examples):
+    def train(self, examples,start_epoch=0):
         """
         examples: list of examples, each example is of form (board, pi, v)
         """
         optimizer = optim.Adam(self.nnet.parameters())
 
-        for epoch in range(args.epochs):
+        for epoch in range(start_epoch,args.epochs):
             print('EPOCH ::: ' + str(epoch+1))
             self.nnet.train()
             data_time = AverageMeter()
