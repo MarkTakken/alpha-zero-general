@@ -200,7 +200,6 @@ class GoGame(Game):
     def stringRepresentation(self, state: np.ndarray):
         logger.debug(f"id of state is {id(state)}")
         return state.tostring()
-        return str(state)
 
     @staticmethod
     def display(state):
