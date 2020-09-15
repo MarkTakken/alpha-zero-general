@@ -38,6 +38,7 @@ class Arena():
         board = self.game.getInitBoard()
         it = 0
         while self.game.getGameEnded(board, curPlayer)==0:
+            print(it)
             it+=1
             if verbose:
                 assert(self.display)
