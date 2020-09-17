@@ -8,7 +8,7 @@ from go.NNet import NNetWrapper as nn
 #from othello.OthelloGame import OthelloGame as Game
 #from othello.pytorch.NNet import NNetWrapper as nn
 from utils import *
-
+#Random edit
 logging.basicConfig(
     format='%(levelname)-8s [%(name)s:%(lineno)d] %(message)s',
     datefmt='%Y-%m-%d:%H:%M:%S',
