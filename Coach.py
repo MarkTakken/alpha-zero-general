@@ -13,10 +13,10 @@ class Coach():
     This class executes the self-play + learning. It uses the functions defined
     in Game and NeuralNet. args are specified in main.py.
     """
-    def __init__(self, game, nnet, args):
+    def __init__(self, game, pnet, nnet, args):
         self.game = game
         self.nnet = nnet
-        self.pnet = self.nnet.__class__(self.game)  # the competitor network
+        self.pnet = pnet #self.nnet.__class__(self.game)  # the competitor network
         self.args = args
         self.mcts = MCTS(self.game, self.nnet, self.args)
         self.trainExamplesHistory = []    # history of examples from args.numItersForTrainExamplesHistory latest iterations
@@ -78,7 +78,7 @@ class Coach():
             # bookkeeping
             print('------ITER ' + str(i) + '------')
             # examples of the iteration
-            if not self.args.skipFirstSelfPlay: #or i > 1
+            if not self.args.skipFirstSelfPlay or i > self.args.startIter: #or i > 1
                 iterationTrainExamples = deque([], maxlen=self.args.maxlenOfQueue)
     
                 eps_time = AverageMeter()
@@ -114,11 +114,12 @@ class Coach():
             shuffle(trainExamples)
 
             # training new network, keeping a copy of the old one
-            self.nnet.save_checkpoint(folder=self.args.checkpoint, filename='temp.pth.tar')
-            self.pnet.load_checkpoint(folder=self.args.checkpoint, filename='temp.pth.tar')
+            self.nnet.save_checkpoint(folder=self.args.checkpoint, filename='old.pth.tar')
+            self.pnet.load_checkpoint(folder=self.args.checkpoint, filename='old.pth.tar')
             pmcts = MCTS(self.game, self.pnet, self.args)
             
             self.nnet.train(trainExamples)
+            self.nnet.save_checkpoint(folder=self.args.checkpoint, filename='new.pth.tar')
             nmcts = MCTS(self.game, self.nnet, self.args)
 
             print('PITTING AGAINST PREVIOUS VERSION')
