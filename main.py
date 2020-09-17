@@ -20,6 +20,7 @@ if "-d" in argv or "--debug" in argv:
     root_logger.setLevel(logging.DEBUG)
 
 args = dotdict({
+    'startIter': 2,
     'numIters': 1000,  #Originally 1000
     'numEps': 60,        #Originally 100    # Number of complete self-play games to simulate during a new iteration.
     'tempThreshold': 9,        #Originally 15
