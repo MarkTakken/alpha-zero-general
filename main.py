@@ -30,7 +30,7 @@ args = dotdict({
     'cpuct': 1,
 
     'checkpoint': './trained_models/9x9go',
-    'load_model': False,
+    'load_model': True,
     'load_folder_file': ('./trained_models/9x9go','checkpoint_0.pth.tar'), #Originally /dev/models/8x100x50 , best.pth.tar
     'numItersForTrainExamplesHistory': 100, #Originally 20
     'resignationThreshold': -0.90  #Added
