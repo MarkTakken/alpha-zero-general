@@ -33,7 +33,7 @@ args = dotdict({
     'checkpoint': './trained_models/9x9go',
     'load_model': True,
     'load_folder_file': ('./trained_models/9x9go','checkpoint_1.pth.tar'), #Originally /dev/models/8x100x50 , best.pth.tar
-    'load_folder_file_pnet': ('./trained_models/9x9go','checkpoint_0.pth.tar'),
+    'load_folder_file_pnet': None, #('./trained_models/9x9go','checkpoint_0.pth.tar'),
     'load_folder_file_examples': ('./trained_models/9x9go','checkpoint_2.pth.tar.examples'), #added
     'skipFirstSelfPlay': True,
     'skipFirstTrain': False,
@@ -48,7 +48,8 @@ if __name__ == "__main__":
 
     if args.load_model:
         nnet.load_checkpoint(args.load_folder_file[0], args.load_folder_file[1])
-        pnet.load_checkpoint(args.load_folder_file_pnet[0],args.load_folder_file_pnet[1])
+        if args.load_folder_file_pnet != None:
+            pnet.load_checkpoint(args.load_folder_file_pnet[0],args.load_folder_file_pnet[1])
 
     c = Coach(g, pnet, nnet, args)
     if args.load_model:
