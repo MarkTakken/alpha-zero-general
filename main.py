@@ -20,20 +20,20 @@ if "-d" in argv or "--debug" in argv:
     root_logger.setLevel(logging.DEBUG)
 
 args = dotdict({
-    'startIter': 2,
+    'startIter': 3,
     'numIters': 1000,  #Originally 1000
-    'numEps': 60,        #Originally 100    # Number of complete self-play games to simulate during a new iteration.
+    'numEps': 120,        #Originally 100    # Number of complete self-play games to simulate during a new iteration.
     'tempThreshold': 9,        #Originally 15
     'updateThreshold': 0.5,     #Originally 0.6 # During arena playoff, new neural net will be accepted if threshold or more of games are won.
     'maxlenOfQueue': 200000,    #Originally 200000 # Number of game examples to train the neural networks.
-    'numMCTSSims': 40,          #Originally 25 # Number of games moves for MCTS to simulate.
+    'numMCTSSims': 100,          #Originally 25 # Number of games moves for MCTS to simulate.
     'arenaCompare': 10,         #Originally 40 # Number of games to play during arena play to determine if new net will be accepted.
     'cpuct': 1,
 
     'checkpoint': './trained_models/9x9go',
     'load_model': True,
     'load_folder_file': ('./trained_models/9x9go','checkpoint_1.pth.tar'), #Originally /dev/models/8x100x50 , best.pth.tar
-    'load_folder_file_examples': ('./trained_models/9x9go','checkpoint_0.pth.tar.examples'), #added
+    'load_folder_file_examples': ('./trained_models/9x9go','checkpoint_1.pth.tar.examples'), #added
     'skipFirstSelfPlay': False,
     'numItersForTrainExamplesHistory': 100, #Originally 20
     'resignationThreshold': -0.90  #Added
