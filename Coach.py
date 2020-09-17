@@ -20,7 +20,7 @@ class Coach():
         self.args = args
         self.mcts = MCTS(self.game, self.nnet, self.args)
         self.trainExamplesHistory = []    # history of examples from args.numItersForTrainExamplesHistory latest iterations
-        self.skipFirstSelfPlay = False    # can be overriden in loadTrainExamples()
+        #self.skipFirstSelfPlay = False    # can be overriden in loadTrainExamples()
 
     def executeEpisode(self):
         """
@@ -78,7 +78,7 @@ class Coach():
             # bookkeeping
             print('------ITER ' + str(i) + '------')
             # examples of the iteration
-            if not self.skipFirstSelfPlay or i>1:
+            if not self.args.skipFirstSelfPlay or i>1:
                 iterationTrainExamples = deque([], maxlen=self.args.maxlenOfQueue)
     
                 eps_time = AverageMeter()
@@ -148,8 +148,9 @@ class Coach():
         f.closed
 
     def loadTrainExamples(self):
-        modelFile = os.path.join(self.args.load_folder_file[0], self.args.load_folder_file[1])
-        examplesFile = modelFile+".examples"
+        #modelFile = os.path.join(self.args.load_folder_file[0], self.args.load_folder_file[1])
+        #examplesFile = modelFile+".examples"
+        examplesFile = os.path.join(self.args.load_folder_file_examples[0], self.args.load_folder_file_examples[1])
         if not os.path.isfile(examplesFile):
             print(examplesFile)
             r = input("File with trainExamples not found. Continue? [y|n]")
@@ -161,4 +162,4 @@ class Coach():
                 self.trainExamplesHistory = Unpickler(f).load()
             f.closed
             # examples based on the model were already collected (loaded)
-            self.skipFirstSelfPlay = True
+            #self.skipFirstSelfPlay = True
