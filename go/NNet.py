@@ -40,11 +40,21 @@ class NNetWrapper(NeuralNet):
 
     def loss_v(self,outputs,targets):
         #print(outputs.size())
-        return torch.sum((outputs-targets)**2)/targets.size()[0]
+        #return torch.sum((outputs-targets)**2)/targets.size()[0]
+        l = torch.sum((outputs-targets)**2)/targets.size()[0]
+        if l == "nan":
+            print(outputs)
+            print(targets)
+        return l
     def loss_pi(self,outputs,targets):
         #print(outputs)
         #print(torch.log(outputs))
-        return -torch.sum(targets*torch.log(outputs))/targets.size()[0]
+        #return -torch.sum(targets*torch.log(outputs))/targets.size()[0]
+        l = -torch.sum(targets*torch.log(outputs))/targets.size()[0]
+        if l == "nan":
+            print(outputs)
+            print(targets)
+        return l
     def train(self, examples,start_epoch=0):
         """
         examples: list of examples, each example is of form (board, pi, v)
