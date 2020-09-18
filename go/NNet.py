@@ -42,7 +42,7 @@ class NNetWrapper(NeuralNet):
         #print(outputs.size())
         #return torch.sum((outputs-targets)**2)/targets.size()[0]
         l = torch.sum((outputs-targets)**2)/targets.size()[0]
-        if l == "nan":
+        if math.isnan(l):
             print(outputs)
             print(targets)
         return l
@@ -51,7 +51,7 @@ class NNetWrapper(NeuralNet):
         #print(torch.log(outputs))
         #return -torch.sum(targets*torch.log(outputs))/targets.size()[0]
         l = -torch.sum(targets*torch.log(outputs))/targets.size()[0]
-        if l == "nan":
+        if math.isnan(l):
             print(outputs)
             print(targets)
         return l
