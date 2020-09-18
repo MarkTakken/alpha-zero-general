@@ -35,9 +35,9 @@ args = dotdict({
     'load_folder_file': ('./trained_models/9x9go','checkpoint_1.pth.tar'), #Originally /dev/models/8x100x50 , best.pth.tar
     'load_folder_file_pnet': None, #('./trained_models/9x9go','checkpoint_0.pth.tar'),
     'load_folder_file_examples': ('./trained_models/9x9go','checkpoint_2.pth.tar.examples'), #added
-    'skipFirstSelfPlay': True,
+    'skipFirstSelfPlay': False,
     'skipFirstTrain': False,
-    'numItersForTrainExamplesHistory': 100, #Originally 20
+    'numItersForTrainExamplesHistory': 20, #Originally 20
     'resignationThreshold': -0.90  #Added
 })
 
