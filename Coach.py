@@ -123,8 +123,8 @@ class Coach():
             nmcts = MCTS(self.game, self.nnet, self.args)
 
             print('PITTING AGAINST PREVIOUS VERSION')
-            arena = Arena(lambda state,player: np.argmax(pmcts.getActionProb(state,player, temp=0)),
-                          lambda state,player: np.argmax(nmcts.getActionProb(state,player, temp=0)), self.game)
+            arena = Arena(lambda state,player: np.where(pmcts.getActionProb(state,player, temp=0) == 1)[0][0],
+                          lambda state,player: np.where(nmcts.getActionProb(state,player, temp=0) == 1)[0][0], self.game)
             pwins, nwins, draws = arena.playGames(self.args.arenaCompare)
 
             print('NEW/PREV WINS : %d / %d ; DRAWS : %d' % (nwins, pwins, draws))
