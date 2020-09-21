@@ -124,7 +124,7 @@ class GoNNet(nn.Module):
         v = self.value_head(x)
         return (pi, v)
 
-def test_if_nan(x,n):
+def test_if_nan(x):
     if math.isnan(x):
         print(x)
 
