@@ -3,6 +3,7 @@ from typing import List, Union, Tuple
 import numpy as np
 
 import torch
+import math
 from torch import Tensor, nn
 
 class ConvBlock(nn.Module):
@@ -116,11 +117,20 @@ class GoNNet(nn.Module):
         # Convert to tensor if necessary
         x = torch.as_tensor(x)
         x.requires_grad_(True)
+        test_if_nan(x,0)
         x = self.conv_block(x)
+        test_if_nan(x,1)
         x = self.blocks(x)
+        test_if_nan(x,2)
         pi = self.policy_head(x)
+        test_if_nan(pi,3)
         v = self.value_head(x)
+        test_if_nan(v,4)
         return (pi, v)
+
+def test_if_nan(x,n):
+    if math.isnan(x):
+        print(n)
 
 def test():
     network = GoNNet(board_size=4,history=1)
