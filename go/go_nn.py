@@ -117,15 +117,15 @@ class GoNNet(nn.Module):
         # Convert to tensor if necessary
         x = torch.as_tensor(x)
         x.requires_grad_(True)
-        test_if_nan(x,0)
+        test_if_nan(x[0][0][0],0)
         x = self.conv_block(x)
-        test_if_nan(x,1)
+        test_if_nan(x[0][0][0],1)
         x = self.blocks(x)
-        test_if_nan(x,2)
+        test_if_nan(x[0][0][0],2)
         pi = self.policy_head(x)
-        test_if_nan(pi,3)
+        test_if_nan(pi[0][0],3)
         v = self.value_head(x)
-        test_if_nan(v,4)
+        test_if_nan(v[0],4)
         return (pi, v)
 
 def test_if_nan(x,n):
