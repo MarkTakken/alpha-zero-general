@@ -42,18 +42,18 @@ class NNetWrapper(NeuralNet):
         #print(outputs.size())
         #return torch.sum((outputs-targets)**2)/targets.size()[0]
         l = torch.sum((outputs-targets)**2)/targets.size()[0]
-        if math.isnan(l):
-            print(outputs)
-            print(targets)
+        #if math.isnan(l):
+        #    print(outputs)
+        #    print(targets)
         return l
     def loss_pi(self,outputs,targets):
         #print(outputs)
         #print(torch.log(outputs))
         #return -torch.sum(targets*torch.log(outputs))/targets.size()[0]
         l = -torch.sum(targets*torch.log(outputs))/targets.size()[0]
-        if math.isnan(l):
-            print(outputs)
-            print(targets)
+        #if math.isnan(l):
+        #    print(outputs)
+        #    print(targets)
         return l
     def train(self, examples,start_epoch=0):
         """
