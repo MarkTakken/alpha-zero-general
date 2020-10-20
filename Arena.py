@@ -6,7 +6,7 @@ class Arena():
     """
     An Arena class where any 2 agents can be pit against each other.
     """
-    def __init__(self, player1, player2, game, display=None):
+    def __init__(self, pmcts, nmcts, game, resignationOn, resignationThreshold, display=None):  #self, player1, player2, game, display=None
         """
         Input:
             player 1,2: two functions that takes board as input, return action
@@ -18,10 +18,14 @@ class Arena():
         see othello/OthelloPlayers.py for an example. See pit.py for pitting
         human players/other baselines with each other.
         """
-        self.player1 = player1
-        self.player2 = player2
+        #self.player1 = player1
+        #self.player2 = player2
+        self.pmcts = pmcts
+        self.nmcts = nmcts
         self.game = game
         self.display = display
+        self.resignationOn = resignationOn
+        self.resignationThreshold = resignationThreshold
 
     def playGame(self, verbose=False):
         """
@@ -33,9 +37,11 @@ class Arena():
             or
                 draw result returned from the game that is neither 1, -1, nor 0.
         """
-        players = [self.player2, None, self.player1]
+        #players = [self.player2, None, self.player1]
+        players = [self.nmcts,None,self.pmcts]
         curPlayer = 1
         board = self.game.getInitBoard()
+        #prev_state_action = None
         it = 0
         while self.game.getGameEnded(board, curPlayer)==0:
             #print(it)
@@ -44,13 +50,17 @@ class Arena():
                 assert(self.display)
                 print("Turn ", str(it), "Player ", str(curPlayer))
                 self.display(board)
-            action = players[curPlayer+1](board,curPlayer)
-
+            #action = players[curPlayer+1](board,curPlayer)
+            action_prob, Q = players[curPlayer+1].getActionProbAndRootValue(board,curPlayer,temp=0)
+            if self.resignationOn and Q < self.resignationThreshold:
+                return -curPlayer
+            action = np.where(action_prob == 1)[0][0]
             valids = self.game.getValidMoves(board,curPlayer)
 
             if valids[action]==0:
                 print(action)
                 assert valids[action] >0
+            prev_state_action = self.game.stringRepresentation(board),action
             board, curPlayer = self.game.getNextState(board, curPlayer, action)
         if verbose:
             assert(self.display)
@@ -94,8 +104,9 @@ class Arena():
                                                                                                        total=bar.elapsed_td, eta=bar.eta_td)
             bar.next()
 
-        self.player1, self.player2 = self.player2, self.player1
-        
+        #self.player1, self.player2 = self.player2, self.player1
+        self.pmcts, self.nmcts = self.nmcts, self.pmcts
+
         for _ in range(num):
             gameResult = self.playGame(verbose=verbose)
             if gameResult==-1:

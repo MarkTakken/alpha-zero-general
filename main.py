@@ -20,25 +20,26 @@ if "-d" in argv or "--debug" in argv:
     root_logger.setLevel(logging.DEBUG)
 
 args = dotdict({
-    'startIter': 6,
-    'numIters': 1000,  #Originally 1000
-    'numEps': 120,        #Originally 100    # Number of complete self-play games to simulate during a new iteration.
+    'startIter': 1,
+    'numIters': 1,  #Originally 1000
+    'numEps': 100,        #Originally 100    # Number of complete self-play games to simulate during a new iteration.
     'tempThreshold': 10,        #Originally 15
     'updateThreshold': 0.5,     #Originally 0.6 # During arena playoff, new neural net will be accepted if threshold or more of games are won.
     'maxlenOfQueue': 200000,    #Originally 200000 # Number of game examples to train the neural networks.
-    'numMCTSSims': 80,          #Originally 25 # Number of games moves for MCTS to simulate.
-    'arenaCompare': 6,         #Originally 40 # Number of games to play during arena play to determine if new net will be accepted.
+    'numMCTSSims': 40,          #Originally 25 # Number of games moves for MCTS to simulate.
+    'arenaCompare': 12,         #Originally 40 # Number of games to play during arena play to determine if new net will be accepted.
     'cpuct': 1,
 
     'checkpoint': './trained_models/9x9go',
     'load_model': True,
-    'load_folder_file': ('./trained_models/9x9go','checkpoint_5.pth.tar'), #Originally /dev/models/8x100x50 , best.pth.tar
-    'load_folder_file_pnet': None, #('./trained_models/9x9go','checkpoint_0.pth.tar'),
-    'load_folder_file_examples': ('./trained_models/9x9go','checkpoint_5.pth.tar.examples'), #added
+    'load_folder_file': ('./trained_models/9x9go','new.pth.tar'), #Originally /dev/models/8x100x50 , best.pth.tar
+    'load_folder_file_pnet': ('./trained_models/9x9go','old.pth.tar'),
+    'load_folder_file_examples': ('./trained_models/9x9go','checkpoint_0.pth.tar.examples'), #added
     'skipFirstSelfPlay': True,
-    'skipFirstTrain': False,
+    'skipFirstTrain': True,
     'numItersForTrainExamplesHistory': 20, #Originally 20
-    'resignationThreshold': -0.90  #Added
+    'resignationThreshold': -0.90,  #Added
+    'resignationOn': False 
 })
 
 if __name__ == "__main__":

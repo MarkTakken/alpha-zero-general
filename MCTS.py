@@ -26,9 +26,8 @@ class MCTS():
 
         self.Es = {}        # stores game.getGameEnded ended for board s
         self.Vs = {}        # stores game.getValidMoves for board s
-        #self.print_count = 0
 
-    def getActionProb(self, state, player, temp=1):
+    def getActionProbAndRootValue(self, state, player, temp=1):
         """
         This function performs numMCTSSims simulations of MCTS starting from
         canonicalBoard.
@@ -37,23 +36,33 @@ class MCTS():
             probs: a policy vector where the probability of the ith action is
                    proportional to Nsa[(s,a)]**(1./temp)
         """
-        #canonicalBoard = self.game.getCanonicalForm(state,player)
-        #print(state)
         for i in range(self.args.numMCTSSims):
             self.search(state,player)
-        #logger.info("Search successful, yay!")
-        #self.print_count = 0
         s = self.game.stringRepresentation(state)
-        counts = [self.Nsa[(s,a)] if (s,a) in self.Nsa else 0 for a in range(self.game.getActionSize())]
+        #counts = [self.Nsa[(s,a)] if (s,a) in self.Nsa else 0 for a in range(self.game.getActionSize())]
+        #root_q,root_n = (-self.Qsa[prev_state_action],self.Nsa[prev_state_action]) if (prev_state_action in self.Qsa) else (self.nnet.predict(self.game.getCanonicalForm(state,player))[1],1)
+        #if type(root_q) != np.float32 and type(root_q) != np.float64 and type(root_q) != np.float and type(root_q) != float:
+        #    logger.info((type(root_q),root_q))
+        #root_q *= root_n
+        root_q,counts,n_sum = 0,[],0
+        for a in range(self.game.getActionSize()):
+            if (s,a) in self.Nsa:
+                n = self.Nsa[(s,a)]
+                n_sum += n
+                root_q += self.Qsa[(s,a)]*n
+                counts.append(n)
+            else:
+                counts.append(0)
+        root_q /= n_sum
         if temp==0:
             bestA = np.argmax(counts)
             probs = [0]*len(counts)
             probs[bestA]=1
-            return probs
+            return np.array(probs), root_q
         counts = [x**(1./temp) for x in counts]
         counts_sum = float(sum(counts))
         probs = [x/counts_sum for x in counts]
-        return probs
+        return np.array(probs),root_q
 
 
     def search(self, state, player):
@@ -75,35 +84,19 @@ class MCTS():
         Returns:
             v: the negative of the value of the current canonicalBoard
         """
-        #if self.print_count <= 20:
-        #    print('----------------------------------------------')
-        #self.print_count += 1
         canonicalBoard = self.game.getCanonicalForm(state,player)
         s = self.game.stringRepresentation(state)
         if s not in self.Es:
-            #print("Checkpoint 0")
             self.Es[s] = self.game.getGameEnded(state, player)
-        #if self.print_count <= 20:
-        #    print(self.game.getGameEnded(state,player),self.Es[s])
-        #    print(s)
         if self.Es[s]!=0:
-            #print("Checkpoint 1")
-            # terminal node
-            #if self.print_count <= 20:
-            #    print("END")
-            return -self.Es[s] #################RETURN###############
-        #--print("Checkpoint 2")
+            return -self.Es[s] 
         if s not in self.Ps:
-            #print("Checkpoint 3")
-            # leaf node
-            #print(self.nnet.predict(canonicalBoard))
             self.Ps[s], v = self.nnet.predict(canonicalBoard)
-            #print(v)
             valids = self.game.getValidMoves(state, player)
-            self.Ps[s] = self.Ps[s]*valids      # masking invalid moves
+            self.Ps[s] = self.Ps[s]*valids
             sum_Ps_s = np.sum(self.Ps[s])
             if sum_Ps_s > 0:
-                self.Ps[s] /= sum_Ps_s    # renormalize
+                self.Ps[s] /= sum_Ps_s
             else:
                 # if all valid moves were masked make all valid moves equally probable
                 
@@ -115,9 +108,7 @@ class MCTS():
 
             self.Vs[s] = valids
             self.Ns[s] = 0
-            #if self.print_count <= 20:
-            #    print("END")
-            return -v ############################RETURN################
+            return -v
 
         valids = self.Vs[s]
         cur_best = -float('inf')
@@ -136,14 +127,8 @@ class MCTS():
                     best_act = a
 
         a = best_act
-        #if self.print_count <= 20:
-        #    print(a)
         next_s, next_player = self.game.getNextState(state, player, a)
-        #if self.print_count <= 20:
-        #    print("Checkpoint 4")
-        #next_canonical = self.game.getCanonicalForm(next_s, next_player)
         v = self.search(next_s,next_player)
-        #print("Checkpoint 5")
 
         if (s,a) in self.Qsa:
             self.Qsa[(s,a)] = (self.Nsa[(s,a)]*self.Qsa[(s,a)] + v)/(self.Nsa[(s,a)]+1)
@@ -154,4 +139,4 @@ class MCTS():
             self.Nsa[(s,a)] = 1
 
         self.Ns[s] += 1
-        return -v     #############################RETURN##################
+        return -v 

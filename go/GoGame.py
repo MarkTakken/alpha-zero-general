@@ -12,7 +12,7 @@ class GoGame(Game):
     }
 
 
-    def __init__(self,n=19,nn_hist_len=8,komi=7.5):
+    def __init__(self,n=9,nn_hist_len=2,komi=7.5):
         self.n = n
         self.nn_hist_len = nn_hist_len
         self.komi = komi #Compensation given to white for going second

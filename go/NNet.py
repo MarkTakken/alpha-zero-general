@@ -23,7 +23,8 @@ args = dotdict({
     'batch_size': 64, #Originally 64
     'cuda': torch.cuda.is_available(),
     'num_filters': 256,
-    'num_blocks': 5
+    'num_blocks': 5,
+    'L2' : 0.0001
 })
 
 class NNetWrapper(NeuralNet):
@@ -68,6 +69,7 @@ class NNetWrapper(NeuralNet):
             batch_time = AverageMeter()
             pi_losses = AverageMeter()
             v_losses = AverageMeter()
+            total_losses = AverageMeter()
             end = time.time()
 
             bar = Bar('Training Net', max=int(len(examples)/args.batch_size))
@@ -95,12 +97,13 @@ class NNetWrapper(NeuralNet):
                 out_pi, out_v = self.nnet(boards)
                 l_pi = self.loss_pi(out_pi, target_pis)
                 l_v = self.loss_v(out_v, target_vs)
-                total_loss = l_pi + l_v
+                total_loss = l_pi + l_v + args.L2*self.nnet.getWeightMagnitude()
                 #print(out_pi,out_v)
 
                 # record loss
                 pi_losses.update(l_pi.item(), boards.size(0))
                 v_losses.update(l_v.item(), boards.size(0))
+                total_losses.update(total_loss.item(),boards.size(0))
 
                 # compute gradient and do SGD step
                 optimizer.zero_grad()
@@ -113,7 +116,7 @@ class NNetWrapper(NeuralNet):
                 batch_idx += 1
 
                 # plot progress
-                bar.suffix  = '({batch}/{size}) Data: {data:.3f}s | Batch: {bt:.3f}s | Total: {total:} | ETA: {eta:} | Loss_pi: {lpi:.4f} | Loss_v: {lv:.3f}'.format(
+                bar.suffix  = '({batch}/{size}) Data: {data:.3f}s | Batch: {bt:.3f}s | Total: {total:} | ETA: {eta:} | Loss_pi: {lpi:.4f} | Loss_v: {lv:.3f} | Loss_total: {loss:.3f}'.format(
                             batch=batch_idx,
                             size=int(len(examples)/args.batch_size),
                             data=data_time.avg,
@@ -122,6 +125,7 @@ class NNetWrapper(NeuralNet):
                             eta=bar.eta_td,
                             lpi=pi_losses.avg,
                             lv=v_losses.avg,
+                            loss = total_losses.avg
                             )
                 bar.next()
             bar.finish()

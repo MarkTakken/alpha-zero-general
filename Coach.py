@@ -6,7 +6,9 @@ from pytorch_classification.utils import Bar, AverageMeter
 import time, os, sys
 from pickle import Pickler, Unpickler
 from random import shuffle
+import logging
 
+logger = logging.getLogger(__file__)
 
 class Coach():
     """
@@ -42,28 +44,35 @@ class Coach():
         board = self.game.getInitBoard()
         self.curPlayer = 1
         episodeStep = 0
+        #prev_state_action = None
 
         while True:
             episodeStep += 1
             canonicalBoard = self.game.getCanonicalForm(board,self.curPlayer)
-            v = self.nnet.predict(canonicalBoard)[1]
+            #v = self.nnet.predict(canonicalBoard)[1]
             #print(v)
-            if v < self.args.resignationThreshold:
-                return [(x[0],x[2],-1*((-1)**(x[1]!=self.curPlayer))) for x in trainExamples] 
+            #if v < self.args.resignationThreshold:
+            #    return [(x[0],x[2],-1*((-1)**(x[1]!=self.curPlayer))) for x in trainExamples] 
             temp = int(episodeStep < self.args.tempThreshold)
-            pi = self.mcts.getActionProb(board,self.curPlayer, temp=temp)
-            #print("Checkpoint oink")
+            pi, root_q = self.mcts.getActionProbAndRootValue(board,self.curPlayer, temp=temp)
+            #logger.info(root_q)
             sym = self.game.getSymmetries(canonicalBoard, pi)
             for b,p in sym:
                 trainExamples.append([b, self.curPlayer, p, None])
 
+            if self.args.resignationOn and root_q < self.args.resignationThreshold:
+                logger.info((episodeStep,root_q,board))
+                return [(x[0],x[2],-1*((-1)**(x[1]!=self.curPlayer))) for x in trainExamples] #Player resigns (I added this)
+
             action = np.random.choice(len(pi), p=pi)
+            prev_state_action = self.game.stringRepresentation(board),action
             board, self.curPlayer = self.game.getNextState(board, self.curPlayer, action)
 
             r = self.game.getGameEnded(board, self.curPlayer)
             #print(board)
             if r!=0:
-                return [(x[0],x[2],r*((-1)**(x[1]!=self.curPlayer))) for x in trainExamples]
+                #logger.info(episodeStep)
+                return [(x[0],x[2],r*((-1)**(x[1]!=self.curPlayer))) for x in trainExamples] #Game ends and is scored
 
     def learn(self):
         """
@@ -74,7 +83,7 @@ class Coach():
         only if it wins >= updateThreshold fraction of games.
         """
 
-        for i in range(self.args.startIter, self.args.numIters+1):
+        for i in range(self.args.startIter, self.args.numIters+self.args.startIter):
             # bookkeeping
             print('------ITER ' + str(i) + '------')
             # examples of the iteration
@@ -113,24 +122,27 @@ class Coach():
                 trainExamples.extend(e)
             shuffle(trainExamples)
 
-            # training new network, keeping a copy of the old one
-            self.nnet.save_checkpoint(folder=self.args.checkpoint, filename='old.pth.tar')
-            self.pnet.load_checkpoint(folder=self.args.checkpoint, filename='old.pth.tar')
-            pmcts = MCTS(self.game, self.pnet, self.args)
+            if not self.args.skipFirstTrain or i > self.args.startIter:
+                # training new network, keeping a copy of the old one
+                self.nnet.save_checkpoint(folder=self.args.checkpoint, filename='old.pth.tar')
+                self.pnet.load_checkpoint(folder=self.args.checkpoint, filename='old.pth.tar')
+                #pmcts = MCTS(self.game, self.pnet, self.args)
             
-            self.nnet.train(trainExamples)
-            self.nnet.save_checkpoint(folder=self.args.checkpoint, filename='new.pth.tar')
+                self.nnet.train(trainExamples)
+                self.nnet.save_checkpoint(folder=self.args.checkpoint, filename='new.pth.tar')
+                #nmcts = MCTS(self.game, self.nnet, self.args)
+
+            pmcts = MCTS(self.game, self.pnet, self.args)
             nmcts = MCTS(self.game, self.nnet, self.args)
-
             print('PITTING AGAINST PREVIOUS VERSION')
-            arena = Arena(lambda state,player: np.where(pmcts.getActionProb(state,player, temp=0) == 1)[0][0],
-                          lambda state,player: np.where(nmcts.getActionProb(state,player, temp=0) == 1)[0][0], self.game)
+            arena = Arena(pmcts,nmcts,self.game,self.args.resignationOn,self.args.resignationThreshold)
+            #arena = Arena(lambda state,player: np.where(pmcts.getActionProb(state,player, temp=0) == 1)[0][0],
+            #              lambda state,player: np.where(nmcts.getActionProb(state,player, temp=0) == 1)[0][0], self.game)
             pwins, nwins, draws = arena.playGames(self.args.arenaCompare)
-
             print('NEW/PREV WINS : %d / %d ; DRAWS : %d' % (nwins, pwins, draws))
             if pwins+nwins == 0 or float(nwins)/(pwins+nwins) < self.args.updateThreshold:
                 print('REJECTING NEW MODEL')
-                self.nnet.load_checkpoint(folder=self.args.checkpoint, filename='temp.pth.tar')
+                self.nnet.load_checkpoint(folder=self.args.checkpoint, filename='old.pth.tar')
             else:
                 print('ACCEPTING NEW MODEL')
                 self.nnet.save_checkpoint(folder=self.args.checkpoint, filename=self.getCheckpointFile(i))

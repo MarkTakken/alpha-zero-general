@@ -98,9 +98,9 @@ class ValueHead(nn.Module):
 
 class GoNNet(nn.Module):
     def __init__(self,
-                 board_size: int=19, #Mark 5/21: Changed 9 to 19
-                 history: int=8,
-                 n_blocks: int=3,  # Alphago Zero uses 19 or 39 blocks, we use fewer. 
+                 board_size: int=9, #Mark 5/21: Changed 9 to 19
+                 history: int=2,
+                 n_blocks: int=5,  # Alphago Zero uses 19 or 39 blocks, we use fewer. 
                  n_filters: int=256):
         super().__init__()
         self.in_channels = history * 2 + 1
@@ -112,6 +112,15 @@ class GoNNet(nn.Module):
         self.blocks = nn.Sequential(*blocks)
         self.policy_head = PolicyHead(in_channels = n_filters, board_size = board_size)
         self.value_head = ValueHead(in_channels = n_filters, board_size = board_size)
+
+    def getFullWeights(self):
+        self.full_weights = torch.cat((torch.flatten(self.conv_block.extractor[0].weight),torch.flatten(self.conv_block.extractor[1].weight),torch.flatten(self.policy_head.extractor[0].weight),torch.flatten(self.policy_head.extractor[1].weight),torch.flatten(self.policy_head.extractor[4].weight),torch.flatten(self.value_head.extractor[0].weight),torch.flatten(self.value_head.extractor[1].weight),torch.flatten(self.value_head.extractor[4].weight),torch.flatten(self.value_head.extractor[6].weight)))
+        for block in self.blocks:
+            self.full_weights = torch.cat((self.full_weights,torch.flatten(block.extractor[0].weight),torch.flatten(block.extractor[1].weight),torch.flatten(block.extractor[3].weight),torch.flatten(block.extractor[4].weight)))
+        return self.full_weights
+
+    def getWeightMagnitude(self):
+        return torch.norm(self.getFullWeights()).tolist()
 
     def forward(self, x: Union[np.ndarray, Tensor]) -> Tuple[Tensor, Tensor]:
         # Convert to tensor if necessary
