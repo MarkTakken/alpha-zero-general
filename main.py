@@ -43,6 +43,12 @@ args = dotdict({
 })
 
 if __name__ == "__main__":
+    import multiprocessing as mp
+    # NOTE: If this doesn't work on your platform, then change it to
+    # "spawn", which is a lot slower.
+    mp.set_start_method("forkserver")
+    
+    
     g = Game(9)
     nnet = nn(g)
     pnet = nn(g)

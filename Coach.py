@@ -8,7 +8,15 @@ from pickle import Pickler, Unpickler
 from random import shuffle
 import logging
 
+import tqdm
+import itertools
+import torch.multiprocessing as mp
+from torch.multiprocessing import Process
+from torch.multiprocessing import Queue
+from typing import List, Tuple
 logger = logging.getLogger(__file__)
+import platform
+
 
 class Coach():
     """
@@ -24,7 +32,11 @@ class Coach():
         self.trainExamplesHistory = []    # history of examples from args.numItersForTrainExamplesHistory latest iterations
         #self.skipFirstSelfPlay = False    # can be overriden in loadTrainExamples()
 
-    def executeEpisode(self):
+    @staticmethod
+    def executeEpisode(worker_index: int,
+                       game,
+                       args,
+                       nnet):
         """
         This function executes one episode of self-play, starting with player 1.
         As the game is played, each turn is added as a training example to
@@ -40,40 +52,69 @@ class Coach():
                            pi is the MCTS informed policy vector, v is +1 if
                            the player eventually won the game, else -1.
         """
+        # Input arguments:
+        # game = self.game
+        # args = self.args
+        # nnet = self.nnet
+        mcts = MCTS(game, nnet, args)
+        #
         trainExamples = []
-        board = self.game.getInitBoard()
-        self.curPlayer = 1
+        board = game.getInitBoard()
+        curPlayer = 1
         episodeStep = 0
         #prev_state_action = None
-
-        while True:
-            episodeStep += 1
-            canonicalBoard = self.game.getCanonicalForm(board,self.curPlayer)
+        
+        # Create a neat progress bar for each worker.
+        pbar = tqdm.tqdm(
+            itertools.count(),
+            desc=f"Worker {worker_index}, Episode step",
+            position=worker_index + 1, # + 1 so we keep the "Self Play using ..." progress bar on top.
+            leave=False,
+            # NOTE: Set this to True to disable the pbars for each worker.
+            disable=False,
+        )
+        
+        for episodeStep in pbar:
+            canonicalBoard = game.getCanonicalForm(board, curPlayer)
             #v = self.nnet.predict(canonicalBoard)[1]
             #print(v)
             #if v < self.args.resignationThreshold:
             #    return [(x[0],x[2],-1*((-1)**(x[1]!=self.curPlayer))) for x in trainExamples] 
-            temp = int(episodeStep < self.args.tempThreshold)
-            pi, root_q = self.mcts.getActionProbAndRootValue(board,self.curPlayer, temp=temp)
+            temp = int(episodeStep < args.tempThreshold)
+            pi, root_q = mcts.getActionProbAndRootValue(board, curPlayer, temp=temp)
             #logger.info(root_q)
-            sym = self.game.getSymmetries(canonicalBoard, pi)
+            sym = game.getSymmetries(canonicalBoard, pi)
             for b,p in sym:
-                trainExamples.append([b, self.curPlayer, p, None])
+                trainExamples.append([b, curPlayer, p, None])
 
-            if self.args.resignationOn and root_q < self.args.resignationThreshold:
+            if args.resignationOn and root_q < args.resignationThreshold:
                 logger.info((episodeStep,root_q,board))
-                return [(x[0],x[2],-1*((-1)**(x[1]!=self.curPlayer))) for x in trainExamples] #Player resigns (I added this)
+                #Player resigns (I added this)
+                break
 
             action = np.random.choice(len(pi), p=pi)
-            prev_state_action = self.game.stringRepresentation(board),action
-            board, self.curPlayer = self.game.getNextState(board, self.curPlayer, action)
+            prev_state_action = game.stringRepresentation(board),action
+            board, curPlayer = game.getNextState(board, curPlayer, action)
 
-            r = self.game.getGameEnded(board, self.curPlayer)
+            r = game.getGameEnded(board, curPlayer)
             #print(board)
             if r!=0:
                 #logger.info(episodeStep)
-                return [(x[0],x[2],r*((-1)**(x[1]!=self.curPlayer))) for x in trainExamples] #Game ends and is scored
-
+                break
+            
+            # Display some information in the pbar, just for fun.
+            pbar.set_postfix(root_q=root_q)
+            
+            # TODO: Remove this, I'm just using this to debug the mp stuff below.
+            # if episodeStep > 100:
+            #     break
+        
+        return [
+            (x[0], x[2], -1*((-1) ** (x[1]!=curPlayer)))
+            for x in trainExamples
+        ]
+        
+        
     def learn(self):
         """
         Performs numIters iterations with numEps episodes of self-play in each
@@ -88,27 +129,31 @@ class Coach():
             print('------ITER ' + str(i) + '------')
             # examples of the iteration
             if not self.args.skipFirstSelfPlay or i > self.args.startIter: #or i > 1
-                iterationTrainExamples = deque([], maxlen=self.args.maxlenOfQueue)
-    
-                eps_time = AverageMeter()
-                bar = Bar('Self Play', max=self.args.numEps)
-                end = time.time()
-    
-                for eps in range(self.args.numEps):
-                    self.mcts = MCTS(self.game, self.nnet, self.args)   # reset search tree
-                    iterationTrainExamples += self.executeEpisode()
-    
-                    # bookkeeping + plot progress
-                    eps_time.update(time.time() - end)
-                    end = time.time()
-                    bar.suffix  = '({eps}/{maxeps}) Eps Time: {et:.3f}s | Total: {total:} | ETA: {eta:}'.format(eps=eps+1, maxeps=self.args.numEps, et=eps_time.avg,
-                                                                                                               total=bar.elapsed_td, eta=bar.eta_td)
-                    bar.next()
-                bar.finish()
-
-                # save the iteration examples to the history 
-                self.trainExamplesHistory.append(iterationTrainExamples)
                 
+                iterationTrainExamples = deque([], maxlen=self.args.maxlenOfQueue)
+
+                n_processes: int = 4
+                # or, if you have enough compute (and VRAM):
+                # n_processes = mp.cpu_count()
+                
+                with mp.Pool(n_processes) as pool:
+                    self.nnet.nnet.share_memory()
+                    pbar = tqdm.tqdm(range(self.args.numEps), position=0)
+                    pbar.set_description(f"Self Play using {n_processes} processes")
+
+                    for eps in pbar:
+                        # Arguments for each worker.
+                        worker_args = [
+                            (i, self.game, self.args, self.nnet)
+                            for i in range(n_processes)
+                        ]
+                        # Apply the executeEpisode method on each argument:
+                        for worker_examples in pool.starmap(Coach.executeEpisode, worker_args):
+                            iterationTrainExamples.extend(worker_examples)
+
+                # save the iteration examples to the history
+                self.trainExamplesHistory.append(iterationTrainExamples)
+  
             if len(self.trainExamplesHistory) > self.args.numItersForTrainExamplesHistory:
                 print("len(trainExamplesHistory) =", len(self.trainExamplesHistory), " => remove the oldest trainExamples")
                 self.trainExamplesHistory.pop(0)
